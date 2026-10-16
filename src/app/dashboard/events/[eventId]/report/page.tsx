@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { requireEventStaff } from "@/lib/staff";
 import { attendanceStats } from "@/lib/stats";
 import { TIMEZONE, formatDateTime, formatRange, slug } from "@/lib/format";
@@ -7,6 +6,8 @@ import { resetAttendance } from "@/app/actions/events";
 import { AttendanceBadge } from "@/components/badges";
 import { Flash } from "@/components/flash";
 import { PageHeader } from "@/components/page-header";
+import { NavSearch, NavTabs, PendingArea, PendingNavProvider } from "@/components/pending-nav";
+import { ReportTableSkeleton } from "@/components/skeletons";
 import { Stat } from "@/components/stat";
 import { SubmitButton } from "@/components/submit-button";
 import type { AttendanceRow, CertificateData } from "@/lib/types";
@@ -112,79 +113,77 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/d
         {event.min_attendance_minutes > 0 ? `, with at least ${event.min_attendance_minutes} minutes attended` : ""}.
       </p>
 
-      <div className="no-print mb-4 flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap rounded-xl border border-stone-300 bg-white p-1 text-sm">
-          {(Object.keys(FILTERS) as Filter[]).map((f) => (
-            <Link
-              key={f}
-              href={filterHref(f)}
-              className={`rounded-lg px-3 py-1.5 ${filter === f ? "bg-brand-700 text-white" : "text-stone-600 hover:text-ink"}`}
-            >
-              {FILTERS[f]}
-            </Link>
-          ))}
+      <PendingNavProvider>
+        <div className="no-print mb-4 flex flex-wrap items-center gap-3">
+          <NavTabs
+            activeHref={filterHref(filter)}
+            tabs={(Object.keys(FILTERS) as Filter[]).map((f) => ({ href: filterHref(f), label: FILTERS[f] }))}
+          />
+          <NavSearch
+            action={`/dashboard/events/${eventId}/report`}
+            defaultValue={search}
+            placeholder="Search name, student no., email"
+            keep={{ filter: filter !== "all" ? filter : undefined }}
+          />
         </div>
-        <form className="flex flex-1 gap-2" action={`/dashboard/events/${eventId}/report`}>
-          {filter !== "all" && <input type="hidden" name="filter" value={filter} />}
-          <input name="q" defaultValue={search} className="input max-w-xs" placeholder="Search name, student no., email" />
-          <button className="btn-secondary">Search</button>
-        </form>
-      </div>
 
-      <div className="card overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wider text-stone-500">
-            <tr>
-              <th className="px-4 py-3 font-semibold">#</th>
-              <th className="px-4 py-3 font-semibold">Attendee</th>
-              <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Checked in</th>
-              <th className="px-4 py-3 font-semibold">Checked out</th>
-              <th className="px-4 py-3 text-right font-semibold">Minutes</th>
-              <th className="px-4 py-3 font-semibold">Certificate</th>
-              <th className="no-print px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-stone-100">
-            {rows.map((r, i) => (
-              <tr key={r.registration_id} className="align-top">
-                <td className="px-4 py-3 tabular-nums text-stone-400">{i + 1}</td>
-                <td className="px-4 py-3">
-                  <p className="font-medium">{r.full_name || "—"}</p>
-                  <p className="text-xs text-stone-500">{[r.student_no, r.email].filter(Boolean).join(" · ")}</p>
-                </td>
-                <td className="px-4 py-3">
-                  <AttendanceBadge status={r.status} checkedInAt={r.checked_in_at} checkedOutAt={r.checked_out_at} completed={r.completed} />
-                </td>
-                <td className="px-4 py-3 tabular-nums">{formatDateTime(r.checked_in_at)}</td>
-                <td className="px-4 py-3 tabular-nums">{formatDateTime(r.checked_out_at)}</td>
-                <td className="px-4 py-3 text-right tabular-nums">{r.minutes_attended ?? "—"}</td>
-                <td className="px-4 py-3 font-mono text-xs">{r.completed ? r.certificate_code : "—"}</td>
-                <td className="no-print px-4 py-3 text-right">
-                  {r.checked_in_at && (
-                    <form action={resetAttendance.bind(null, eventId, r.registration_id)}>
-                      <SubmitButton
-                        className="btn-ghost px-2 py-1 text-xs"
-                        confirm={`Clear ${r.full_name}'s check-in and check-out times?`}
-                        pendingText="…"
-                      >
-                        Reset
-                      </SubmitButton>
-                    </form>
-                  )}
-                </td>
-              </tr>
-            ))}
-            {!rows.length && (
-              <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-stone-500">
-                  {all.length ? "No attendees match this filter." : "No one has registered yet."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+        <PendingArea fallback={<ReportTableSkeleton rows={Math.min(Math.max(rows.length, 3), 10)} />}>
+          <div className="card overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
+              <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wider text-stone-500">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">#</th>
+                  <th className="px-4 py-3 font-semibold">Attendee</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
+                  <th className="px-4 py-3 font-semibold">Checked in</th>
+                  <th className="px-4 py-3 font-semibold">Checked out</th>
+                  <th className="px-4 py-3 text-right font-semibold">Minutes</th>
+                  <th className="px-4 py-3 font-semibold">Certificate</th>
+                  <th className="no-print px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {rows.map((r, i) => (
+                  <tr key={r.registration_id} className="align-top">
+                    <td className="px-4 py-3 tabular-nums text-stone-400">{i + 1}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium">{r.full_name || "—"}</p>
+                      <p className="text-xs text-stone-500">{[r.student_no, r.email].filter(Boolean).join(" · ")}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <AttendanceBadge status={r.status} checkedInAt={r.checked_in_at} checkedOutAt={r.checked_out_at} completed={r.completed} />
+                    </td>
+                    <td className="px-4 py-3 tabular-nums">{formatDateTime(r.checked_in_at)}</td>
+                    <td className="px-4 py-3 tabular-nums">{formatDateTime(r.checked_out_at)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{r.minutes_attended ?? "—"}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{r.completed ? r.certificate_code : "—"}</td>
+                    <td className="no-print px-4 py-3 text-right">
+                      {r.checked_in_at && (
+                        <form action={resetAttendance.bind(null, eventId, r.registration_id)}>
+                          <SubmitButton
+                            className="btn-ghost px-2 py-1 text-xs"
+                            confirm={`Clear ${r.full_name}'s check-in and check-out times?`}
+                            pendingText="…"
+                          >
+                            Reset
+                          </SubmitButton>
+                        </form>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {!rows.length && (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-10 text-center text-stone-500">
+                      {all.length ? "No attendees match this filter." : "No one has registered yet."}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </PendingArea>
+      </PendingNavProvider>
       <p className="mt-4 hidden text-xs text-stone-500 print:block">
         Generated by Dalo on {formatDateTime(new Date().toISOString())}
       </p>

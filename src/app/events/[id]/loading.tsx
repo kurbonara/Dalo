@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/page-skeleton";
+import { EventDetailSkeleton } from "@/components/skeletons";
 
 export default function Loading() {
-  return <PageSkeleton variant="detail" />;
+  return <EventDetailSkeleton />;
 }

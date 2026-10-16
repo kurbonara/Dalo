@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/page-skeleton";
+import { ManageEventSkeleton } from "@/components/skeletons";
 
 export default function Loading() {
-  return <PageSkeleton variant="table" />;
+  return <ManageEventSkeleton />;
 }

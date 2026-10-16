@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { EventCard } from "@/components/event-card";
+import { EventGridSkeleton } from "@/components/skeletons";
 import type { EventWithOrg } from "@/lib/types";
 
 const steps = [
@@ -22,17 +24,7 @@ const steps = [
   },
 ];
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("events")
-    .select("*, organizations(id, name)")
-    .eq("is_published", true)
-    .gte("ends_at", new Date().toISOString())
-    .order("starts_at")
-    .limit(4);
-  const events = (data ?? []) as EventWithOrg[];
-
+export default function Home() {
   return (
     <>
       <section className="border-b border-stone-200 bg-white">
@@ -104,16 +96,32 @@ export default async function Home() {
             See all →
           </Link>
         </div>
-        {events.length ? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {events.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        ) : (
-          <p className="card p-6 text-sm text-stone-600">No upcoming events yet. Check back soon!</p>
-        )}
+        <Suspense fallback={<EventGridSkeleton count={4} />}>
+          <UpcomingEvents />
+        </Suspense>
       </section>
     </>
+  );
+}
+
+async function UpcomingEvents() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("events")
+    .select("*, organizations(id, name)")
+    .eq("is_published", true)
+    .gte("ends_at", new Date().toISOString())
+    .order("starts_at")
+    .limit(4);
+  const events = (data ?? []) as EventWithOrg[];
+
+  return events.length ? (
+    <div className="grid gap-3 md:grid-cols-2">
+      {events.map((event) => (
+        <EventCard key={event.id} event={event} />
+      ))}
+    </div>
+  ) : (
+    <p className="card p-6 text-sm text-stone-600">No upcoming events yet. Check back soon!</p>
   );
 }

@@ -18,13 +18,15 @@ export async function SiteHeader() {
             Events
           </Link>
           {user && (
-            <Link href="/tickets" className="btn-ghost px-3 py-2">
-              My tickets
-            </Link>
+            <>
+              <Link href="/tickets" className="btn-ghost px-3 py-2">
+                My tickets
+              </Link>
+              <Link href="/dashboard" className="btn-ghost px-3 py-2">
+                Organizer
+              </Link>
+            </>
           )}
-          <Link href="/dashboard" className="btn-ghost px-3 py-2">
-            Organizer
-          </Link>
           <Link href="/verify" className="btn-ghost hidden px-3 py-2 sm:inline-flex">
             Verify
           </Link>
