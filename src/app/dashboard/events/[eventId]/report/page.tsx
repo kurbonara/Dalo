@@ -6,6 +6,7 @@ import { resetAttendance } from "@/app/actions/events";
 import { AttendanceBadge } from "@/components/badges";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { PageHeader } from "@/components/page-header";
 import { NavSearch, NavTabs, PendingArea, PendingNavProvider } from "@/components/pending-nav";
 import { ReportTableSkeleton } from "@/components/skeletons";
@@ -87,7 +88,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/d
 
   return (
     <div className="container-page py-10">
-      {eventPhase(event.starts_at, event.ends_at) === "live" && <AutoRefresh seconds={20} />}
+      {eventPhase(event.starts_at, event.ends_at) === "live" && <AutoRefresh seconds={60} />}
       <PageHeader
         title="Attendance report"
         subtitle={
@@ -100,6 +101,12 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/d
         actions={<ReportTools rows={all} certificates={certificates} baseName={slug(event.title)} timeZone={TIMEZONE} />}
       />
       <Flash params={query} />
+      <RealtimeRefresh
+        subscriptions={[
+          { table: "registrations", filter: `event_id=eq.${eventId}` },
+          { table: "events", filter: `id=eq.${eventId}` },
+        ]}
+      />
 
       <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="Registered" value={stats.registered} hint={stats.cancelled ? `${stats.cancelled} cancelled` : undefined} />

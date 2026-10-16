@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { EventCard } from "@/components/event-card";
 import { EventGridSkeleton } from "@/components/skeletons";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import type { EventWithOrg } from "@/lib/types";
 
 const steps = [
@@ -27,6 +28,7 @@ const steps = [
 export default function Home() {
   return (
     <>
+      <RealtimeRefresh subscriptions={[{ table: "events" }]} />
       <section className="border-b border-stone-200 bg-white">
         <div className="container-page grid gap-10 py-16 md:grid-cols-[1.2fr_1fr] md:items-center md:py-24">
           <div>

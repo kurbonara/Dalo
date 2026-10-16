@@ -6,6 +6,7 @@ import { eventPhase, formatRange } from "@/lib/format";
 import { AttendanceBadge } from "@/components/badges";
 import { PageHeader } from "@/components/page-header";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import type { DaloEvent, Registration } from "@/lib/types";
 
 export const metadata: Metadata = { title: "My tickets" };
@@ -34,6 +35,7 @@ export default async function TicketsPage({ searchParams }: PageProps<"/tickets"
     <div className="container-page max-w-4xl py-10">
       <PageHeader title="My tickets" subtitle="Your QR tickets and certificates." actions={<Link href="/events" className="btn-secondary">Find events</Link>} />
       <Flash params={params} />
+      <RealtimeRefresh subscriptions={[{ table: "registrations", filter: `user_id=eq.${user.id}` }]} />
 
       <Section title="Upcoming & ongoing" empty="No active tickets. Register for an event to get one.">
         {active.map((r) => (

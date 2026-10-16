@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser, getSession } from "@/lib/auth";
 import { eventPhase, formatRange } from "@/lib/format";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { PhaseBadge, AttendanceBadge } from "@/components/badges";
 import { SubmitButton } from "@/components/submit-button";
 import { registerForEvent, cancelRegistration } from "@/app/actions/registrations";
@@ -50,6 +51,12 @@ export default async function EventPage({ params, searchParams }: PageProps<"/ev
         ← All events
       </Link>
       <Flash params={flash} />
+      <RealtimeRefresh
+        subscriptions={[
+          { table: "events", filter: `id=eq.${id}` },
+          { table: "registrations", filter: `event_id=eq.${id}` },
+        ]}
+      />
 
       <div className="card overflow-hidden">
         <div className="bg-brand-800 px-6 py-8 text-white sm:px-8">

@@ -9,6 +9,7 @@ import { AttendanceBadge } from "@/components/badges";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { CertificateButton } from "@/components/certificate-button";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import type { DaloEvent, Registration } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Ticket" };
@@ -54,11 +55,17 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
 
   return (
     <div className="container-page max-w-lg py-10">
-      {phase !== "ended" && !cancelled && <AutoRefresh seconds={10} />}
+      {phase !== "ended" && !cancelled && <AutoRefresh seconds={60} />}
       <Link href="/tickets" className="mb-3 inline-block text-sm text-stone-500 hover:text-ink">
         ← My tickets
       </Link>
       <Flash params={flash} />
+      <RealtimeRefresh
+        subscriptions={[
+          { table: "registrations", filter: `id=eq.${reg.id}` },
+          { table: "events", filter: `id=eq.${event.id}` },
+        ]}
+      />
 
       <div className="card overflow-hidden">
         <div className="bg-brand-800 px-6 py-5 text-white">

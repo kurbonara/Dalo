@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createOrg } from "@/app/actions/orgs";
 import { EventCard } from "@/components/event-card";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import type { EventWithOrg, Organization, OrgRole } from "@/lib/types";
@@ -41,6 +42,9 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     <div className="container-page py-10">
       <PageHeader title="Organizer dashboard" subtitle="Manage your organizations, events and attendance." />
       <Flash params={params} />
+      {orgIds.length > 0 && (
+        <RealtimeRefresh subscriptions={[{ table: "events", filter: `org_id=in.(${orgIds.join(",")})` }]} />
+      )}
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-10">

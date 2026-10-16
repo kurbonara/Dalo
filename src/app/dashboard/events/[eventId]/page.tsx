@@ -7,6 +7,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { PhaseBadge } from "@/components/badges";
 import { CopyButton } from "@/components/copy-button";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { PageHeader } from "@/components/page-header";
 import { Stat } from "@/components/stat";
 import { SubmitButton } from "@/components/submit-button";
@@ -49,7 +50,7 @@ export default async function ManageEventPage({ params, searchParams }: PageProp
 
   return (
     <div className="container-page py-10">
-      {phase === "live" && <AutoRefresh seconds={20} />}
+      {phase === "live" && <AutoRefresh seconds={60} />}
       <PageHeader
         title={event.title}
         subtitle={
@@ -81,6 +82,12 @@ export default async function ManageEventPage({ params, searchParams }: PageProp
         }
       />
       <Flash params={flash} />
+      <RealtimeRefresh
+        subscriptions={[
+          { table: "registrations", filter: `event_id=eq.${eventId}` },
+          { table: "events", filter: `id=eq.${eventId}` },
+        ]}
+      />
 
       <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-5">
         <Stat label="Registered" value={stats.registered} hint={event.capacity ? `of ${event.capacity} slots` : "no limit"} />

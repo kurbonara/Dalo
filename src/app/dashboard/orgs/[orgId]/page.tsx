@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { addMember, deleteOrg, removeMember, updateOrg } from "@/app/actions/orgs";
 import { EventCard } from "@/components/event-card";
 import { Flash } from "@/components/flash";
+import { RealtimeRefresh } from "@/components/realtime-refresh";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import type { EventWithOrg, Organization, OrgRole } from "@/lib/types";
@@ -49,6 +50,7 @@ export default async function OrgPage({ params, searchParams }: PageProps<"/dash
         }
       />
       <Flash params={flash} />
+      <RealtimeRefresh subscriptions={[{ table: "events", filter: `org_id=eq.${orgId}` }]} />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <section>
