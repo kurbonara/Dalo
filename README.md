@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dalo: org event registration & attendance
 
-## Getting Started
+Student orgs track attendance on paper or with Google Forms, which are easy to fake and tedious to tally for certificates. Dalo replaces them with:
 
-First, run the development server:
+- **Event registration** with capacity limits and open/close control
+- **A QR ticket per attendee**, tied to their account (a 128-bit random code that can't be guessed or shared usefully)
+- **Scan-in / scan-out** from any officer's phone, with a timestamped audit log
+- **Automatic attendance reports**: live stats, filters, CSV export, printing
+- **E-certificates** (PDF) for attendees who meet the completion rule, each with a public verification QR code
+
+Built with Next.js 16 (App Router), Tailwind CSS 4 and Supabase (Auth + Postgres + row-level security).
+
+## How it works
+
+| Who | What they do |
+| --- | --- |
+| **Attendee** | Signs up → registers for an event → shows QR ticket at the door → scanned in and out → downloads certificate from **My tickets** |
+| **Officer** | Opens **Organizer → event → Open scanner** on a phone. The first scan checks the attendee in, the next scan checks them out. |
+| **Owner** | Creates the organization, adds officers by email, creates events, views reports, downloads all certificates as one PDF |
+| **Anyone** | Verifies a certificate at `/verify/<certificate no.>` (or by scanning its QR) |
+
+**Completion rule** (set per event): scanned in, plus scanned out if *Require scan-out* is on (otherwise the event must have ended), plus at least *N minutes* attended if a minimum is set.
+
+### Why it's hard to fake
+
+- Tickets are tied to an account, and only officers of the hosting org can scan (enforced in the database, not just the UI).
+- Attendees can't modify their own registration rows. Check-in/out only happens through the `scan_ticket` database function.
+- A ticket for another event, a cancelled ticket, or an unknown code is rejected and logged.
+- Every scan records who scanned it and when (`scan_logs`).
+
+## Setup
+
+### 1. Database
+
+The schema is in [`supabase/migrations/`](supabase/migrations/). Because the Supabase project is connected to GitHub, pushing this repo to the connected branch applies the migration automatically.
+
+To apply it manually instead: open **Supabase Dashboard → SQL Editor**, paste the migration file, and run it.
+
+### 2. Supabase Auth settings
+
+In **Authentication → URL Configuration**:
+
+- **Site URL**: your deployed URL (e.g. `https://dalo.vercel.app`)
+- **Redirect URLs**: add `https://<your-domain>/auth/confirm` and `http://localhost:3000/auth/confirm`
+
+Email confirmation works out of the box: the confirmation link goes to `/auth/confirm`. For quick local testing you can turn off **Confirm email** under **Authentication → Providers → Email**.
+
+### 3. Environment variables
+
+Copy `.env.example` to `.env.local` and fill in the values from **Project Settings → API**:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon or publishable key>
+NEXT_PUBLIC_SITE_URL=http://localhost:3000   # used in certificate QR codes
+NEXT_PUBLIC_TIMEZONE=Asia/Manila              # time zone for entering/displaying event times
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open http://localhost:3000, create an account, then go to **Organizer** to create your organization and first event.
 
-## Learn More
+> **Camera scanning requires HTTPS** (or `localhost`). To test the scanner on a phone, deploy (e.g. to Vercel) or use an HTTPS tunnel. Officers can also type or paste ticket codes manually.
 
-To learn more about Next.js, take a look at the following resources:
+### 5. Deploy (Vercel)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Import the GitHub repo in Vercel, add the four environment variables above (set `NEXT_PUBLIC_SITE_URL` to the production URL), and deploy. Then add the production `/auth/confirm` URL to Supabase's redirect URLs.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure
 
-## Deploy on Vercel
+```
+supabase/migrations/            Schema, RLS policies, RPCs (register, scan, verify…)
+src/proxy.ts                    Refreshes the Supabase session; guards /dashboard, /tickets, /account
+src/app/
+  events/                       Public event list + event page with registration
+  tickets/                      Attendee's QR tickets and certificate download
+  verify/                       Public certificate verification
+  dashboard/                    Organizer area: orgs, officers, events
+    events/[eventId]/scan       QR scanner (camera + manual entry)
+    events/[eventId]/report     Attendance report, CSV, print, bulk certificates
+  actions/                      Server actions
+src/lib/certificate.ts          PDF certificate generator (pdf-lib, runs in the browser)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database overview
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `profiles`: name and student number (auto-created on sign-up)
+- `organizations`, `org_members` (`owner` | `officer`)
+- `events`: schedule, capacity, completion rule, certificate signatory
+- `registrations`: one per attendee per event; holds `ticket_code`, `certificate_code`, and check-in/out times
+- `scan_logs`: audit trail of every scan, including rejected ones
+- `attendance_report` view: per-attendee minutes attended and `completed` flag
+- RPCs: `register_for_event`, `cancel_registration`, `scan_ticket`, `reset_attendance`, `add_org_member`, `verify_certificate`, `event_registration_count`
