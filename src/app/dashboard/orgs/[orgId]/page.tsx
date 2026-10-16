@@ -10,6 +10,7 @@ import { RefreshAtTimes } from "@/components/refresh-at-times";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import type { EventWithOrg, Organization, OrgRole } from "@/lib/types";
+import { OfficerPicker } from "./officer-picker";
 
 type Member = { user_id: string; role: OrgRole; profiles: { full_name: string; email: string | null } | null };
 
@@ -108,8 +109,8 @@ export default async function OrgPage({ params, searchParams }: PageProps<"/dash
             </ul>
             {isOwner && (
               <form action={add} className="mt-4 space-y-2 border-t border-stone-100 pt-4">
-                <label className="label" htmlFor="member-email">Add an officer</label>
-                <input className="input" id="member-email" name="email" type="email" placeholder="their Dalo account email" required />
+                <label className="label" htmlFor="member-search">Add an officer</label>
+                <OfficerPicker key={members.length} orgId={orgId} />
                 <div className="flex gap-2">
                   <select name="role" className="input" defaultValue="officer" aria-label="Role">
                     <option value="officer">Officer (manage events & scan)</option>

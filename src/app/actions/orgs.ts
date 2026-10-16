@@ -57,15 +57,45 @@ export async function deleteOrg(orgId: string) {
 export async function addMember(orgId: string, formData: FormData) {
   await requireUser();
   const path = `/dashboard/orgs/${orgId}`;
+  const userId = String(formData.get("user_id") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const role = String(formData.get("role") ?? "officer");
+  if (!userId && !email) fail(path, "Pick someone from the suggestions or type their email.");
 
   const supabase = await createClient();
-  const { error } = await supabase.rpc("add_org_member", { p_org_id: orgId, p_email: email, p_role: role });
-  if (error) fail(path, error.message);
+  let added = email;
+  if (userId) {
+    // Picked from the suggestions.
+    const { data, error } = await supabase.rpc("add_org_member_by_id", {
+      p_org_id: orgId,
+      p_user_id: userId,
+      p_role: role,
+    });
+    if (error) fail(path, error.message);
+    added = (data as string) || "They";
+  } else {
+    const { error } = await supabase.rpc("add_org_member", { p_org_id: orgId, p_email: email, p_role: role });
+    if (error) fail(path, error.message);
+  }
 
   revalidatePath(path);
-  succeed(path, `${email} was added as ${role}.`);
+  succeed(path, `${added} was added as ${role}.`);
+}
+
+export type OfficerCandidate = {
+  user_id: string;
+  full_name: string;
+  student_no: string | null;
+  email_hint: string | null;
+  joined_events: boolean;
+};
+
+/** Owners: suggestions while typing in "Add an officer". */
+export async function searchOfficerCandidates(orgId: string, query: string): Promise<OfficerCandidate[]> {
+  if (query.trim().length < 2) return [];
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("search_profiles_for_org", { p_org_id: orgId, p_query: query });
+  return (data ?? []) as OfficerCandidate[];
 }
 
 export async function removeMember(orgId: string, userId: string) {
