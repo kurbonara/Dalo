@@ -66,6 +66,11 @@ export default async function ManageEventPage({ params, searchParams }: PageProp
             <Link href={`/dashboard/events/${eventId}/scan`} className="btn-primary">
               Open scanner
             </Link>
+            {event.self_checkin_enabled && (
+              <Link href={`/dashboard/events/${eventId}/checkin-screen`} className="btn-secondary">
+                Self check-in screen
+              </Link>
+            )}
             <Link href={`/dashboard/events/${eventId}/report`} className="btn-secondary">
               Attendance report
             </Link>

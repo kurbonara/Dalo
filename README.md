@@ -19,6 +19,8 @@ Built with Next.js 16 (App Router), Tailwind CSS 4 and Supabase (Auth + Postgres
 | **Owner** | Creates the organization, adds officers by email, creates events, views reports, downloads all certificates as one PDF |
 | **Anyone** | Verifies a certificate at `/verify/<certificate no.>` (or by scanning its QR) |
 
+**Self check-in** (optional, per event): when lines are long, an officer opens **Self check-in screen** on a laptop or projector. It shows a QR code that changes every 30 seconds (configurable). Registered attendees scan it with their phone camera to check themselves in. At the end, switch the screen to **Check-out**. Codes only work during the event (±1 hour), only for registered attendees, and the report marks these entries as **self**.
+
 **Completion rule** (set per event): scanned in, plus scanned out if *Require scan-out* is on (otherwise the event must have ended), plus at least *N minutes* attended if a minimum is set.
 
 ### Why it's hard to fake
@@ -95,4 +97,5 @@ src/lib/certificate.ts          PDF certificate generator (pdf-lib, runs in the 
 - `registrations`: one per attendee per event; holds `ticket_code`, `certificate_code`, and check-in/out times
 - `scan_logs`: audit trail of every scan, including rejected ones
 - `attendance_report` view: per-attendee minutes attended and `completed` flag
-- RPCs: `register_for_event`, `cancel_registration`, `scan_ticket`, `reset_attendance`, `add_org_member`, `verify_certificate`, `event_registration_count`
+- `event_secrets`: per-event secret for rotating self check-in codes (not readable by any client)
+- RPCs: `current_checkin_code`, `self_check_in`, `register_for_event`, `cancel_registration`, `scan_ticket`, `reset_attendance`, `add_org_member`, `verify_certificate`, `event_registration_count`

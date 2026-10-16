@@ -23,6 +23,8 @@ type ParsedEvent =
         min_attendance_minutes: number;
         certificate_signatory: string | null;
         certificate_signatory_title: string | null;
+        self_checkin_enabled: boolean;
+        self_checkin_interval_seconds: number;
       };
     };
 
@@ -33,6 +35,7 @@ function parseEventForm(formData: FormData): ParsedEvent {
   const endsAt = zonedLocalToISO(text("ends_at"));
   const capacityRaw = text("capacity");
   const minMinutesRaw = text("min_attendance_minutes");
+  const interval = Number(text("self_checkin_interval_seconds") || 30);
 
   if (title.length < 2) return { error: "Please give the event a title." };
   if (!startsAt || !endsAt) return { error: "Please set when the event starts and ends." };
@@ -45,6 +48,10 @@ function parseEventForm(formData: FormData): ParsedEvent {
   const minMinutes = minMinutesRaw ? Number(minMinutesRaw) : 0;
   if (!Number.isInteger(minMinutes) || minMinutes < 0) {
     return { error: "Minimum attendance must be a whole number of minutes." };
+  }
+
+  if (![30, 60, 120, 300].includes(interval)) {
+    return { error: "Choose how often the self check-in code changes." };
   }
 
   return {
@@ -61,6 +68,8 @@ function parseEventForm(formData: FormData): ParsedEvent {
       min_attendance_minutes: minMinutes,
       certificate_signatory: text("certificate_signatory") || null,
       certificate_signatory_title: text("certificate_signatory_title") || null,
+      self_checkin_enabled: formData.get("self_checkin_enabled") === "on",
+      self_checkin_interval_seconds: interval,
     },
   };
 }

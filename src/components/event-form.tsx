@@ -108,6 +108,38 @@ export function EventForm({
           />
           <p className="hint">Time between scan-in and scan-out needed for a certificate. 0 means no minimum.</p>
         </div>
+        <div className="space-y-3 rounded-xl border border-stone-200 p-4">
+          <label className="flex items-start gap-3 text-sm">
+            <input
+              type="checkbox"
+              name="self_checkin_enabled"
+              defaultChecked={event?.self_checkin_enabled ?? false}
+              className="mt-0.5 h-4 w-4 accent-brand-700"
+            />
+            <span>
+              <span className="font-medium">Allow self check-in</span>
+              <span className="block text-stone-500">
+                Show a rotating QR code on a screen or projector. Registered attendees scan it with their own phones,
+                so officers don&apos;t have to scan everyone. Officers can still scan tickets too.
+              </span>
+            </span>
+          </label>
+          <div className="pl-7">
+            <label className="label" htmlFor="self_checkin_interval_seconds">QR code changes every</label>
+            <select
+              className="input max-w-48"
+              id="self_checkin_interval_seconds"
+              name="self_checkin_interval_seconds"
+              defaultValue={String(event?.self_checkin_interval_seconds ?? 30)}
+            >
+              <option value="30">30 seconds (recommended)</option>
+              <option value="60">1 minute</option>
+              <option value="120">2 minutes</option>
+              <option value="300">5 minutes</option>
+            </select>
+            <p className="hint">Shorter is safer: a photo of the code forwarded to someone outside expires quickly.</p>
+          </div>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="certificate_signatory">Signatory name</label>

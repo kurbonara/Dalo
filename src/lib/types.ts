@@ -30,6 +30,8 @@ export type DaloEvent = {
   min_attendance_minutes: number;
   certificate_signatory: string | null;
   certificate_signatory_title: string | null;
+  self_checkin_enabled: boolean;
+  self_checkin_interval_seconds: number;
   created_at: string;
 };
 
@@ -62,6 +64,41 @@ export type AttendanceRow = {
   checked_out_at: string | null;
   minutes_attended: number | null;
   completed: boolean;
+  check_in_method: AttendanceMethod | null;
+  check_out_method: AttendanceMethod | null;
+};
+
+export type AttendanceMethod = "officer" | "self";
+
+export type CheckinMode = "in" | "out";
+
+export type CheckinCode = {
+  code: string;
+  mode: CheckinMode;
+  interval: number;
+  expires_at: string;
+  server_time: string;
+  checked_in: number;
+  checked_out: number;
+};
+
+export type SelfCheckinResult = {
+  ok: boolean;
+  result:
+    | "checked_in"
+    | "checked_out"
+    | "already_in"
+    | "already_out"
+    | "expired"
+    | "invalid"
+    | "disabled"
+    | "closed"
+    | "not_registered"
+    | "not_in";
+  message: string;
+  name?: string;
+  checked_in_at?: string;
+  checked_out_at?: string;
 };
 
 export type ScanResult = {
