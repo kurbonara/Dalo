@@ -98,3 +98,23 @@ export function slug(text: string) {
       .slice(0, 60) || "event"
   );
 }
+
+const HOUR = 60 * 60 * 1000;
+
+/**
+ * When officers and attendees may record attendance (mirrors scan_ticket / self_check_in):
+ * check-in from 1 hour before start until the end, check-out until 1 hour after the end.
+ */
+export function attendanceWindow(startsAt: string, endsAt: string, now = Date.now()) {
+  const opensAt = new Date(new Date(startsAt).getTime() - HOUR).toISOString();
+  const checkoutClosesAt = new Date(new Date(endsAt).getTime() + HOUR).toISOString();
+  const state =
+    now < new Date(opensAt).getTime()
+      ? "not_open"
+      : now > new Date(checkoutClosesAt).getTime()
+        ? "closed"
+        : now > new Date(endsAt).getTime()
+          ? "checkout_only"
+          : "open";
+  return { state, opensAt, checkoutClosesAt } as const;
+}

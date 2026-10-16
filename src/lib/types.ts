@@ -112,7 +112,8 @@ export type ScanResult = {
     | "already_in"
     | "already_out"
     | "not_in"
-    | "too_soon";
+    | "too_soon"
+    | "closed";
   message: string;
   name?: string;
   student_no?: string | null;
