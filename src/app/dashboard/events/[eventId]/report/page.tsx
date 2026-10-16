@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { requireEventStaff } from "@/lib/staff";
 import { attendanceStats } from "@/lib/stats";
-import { TIMEZONE, formatDateTime, formatRange, slug } from "@/lib/format";
+import { TIMEZONE, eventPhase, formatDateTime, formatRange, slug } from "@/lib/format";
 import { resetAttendance } from "@/app/actions/events";
 import { AttendanceBadge } from "@/components/badges";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { Flash } from "@/components/flash";
 import { PageHeader } from "@/components/page-header";
 import { NavSearch, NavTabs, PendingArea, PendingNavProvider } from "@/components/pending-nav";
@@ -86,6 +87,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/d
 
   return (
     <div className="container-page py-10">
+      {eventPhase(event.starts_at, event.ends_at) === "live" && <AutoRefresh seconds={20} />}
       <PageHeader
         title="Attendance report"
         subtitle={

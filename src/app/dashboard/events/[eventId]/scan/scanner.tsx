@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Html5Qrcode } from "html5-qrcode";
-import { createClient } from "@/lib/supabase/client";
+import { scanTicket } from "@/app/actions/scan";
 import type { ScanResult } from "@/lib/types";
 
 type Mode = "auto" | "in" | "out";
@@ -64,15 +64,13 @@ export function Scanner({ eventId, requireCheckout }: { eventId: string; require
 
       busyRef.current = true;
       setBusy(true);
-      const supabase = createClient();
-      const { data, error } = await supabase.rpc("scan_ticket", {
-        p_event_id: eventId,
-        p_ticket_code: trimmed,
-        p_mode: modeRef.current,
-      });
-      const result: ScanResult = error
-        ? { ok: false, result: "invalid", message: error.message }
-        : (data as ScanResult);
+      let result: ScanResult;
+      try {
+        result = await scanTicket(eventId, trimmed, modeRef.current);
+      } catch {
+        result = { ok: false, result: "invalid", message: "Network error. Check your connection and scan again." };
+        recentRef.current.delete(trimmed);
+      }
       const entry = { ...result, at: Date.now(), key: ++keyRef.current };
       setLast(entry);
       setLog((prev) => [entry, ...prev].slice(0, 25));
