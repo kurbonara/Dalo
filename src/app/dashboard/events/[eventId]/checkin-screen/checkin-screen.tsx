@@ -92,6 +92,8 @@ export function CheckinScreen({
                     role="radio"
                     aria-checked={mode === m}
                     onClick={() => {
+                      // Re-selecting the current mode would clear the QR without fetching a new one.
+                      if (m === mode) return;
                       setCode(null);
                       setSvg("");
                       setMode(m);
