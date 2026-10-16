@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createOrg } from "@/app/actions/orgs";
 import { EventCard } from "@/components/event-card";
@@ -12,7 +12,7 @@ import type { EventWithOrg, Organization, OrgRole } from "@/lib/types";
 export const metadata: Metadata = { title: "Organizer" };
 
 export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
-  const user = await requireUser("/dashboard");
+  const user = await requireSession("/dashboard");
   const params = await searchParams;
   const supabase = await createClient();
 

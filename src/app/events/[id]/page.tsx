@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getCurrentUser, getOrgRole } from "@/lib/auth";
+import { getCurrentUser, getSession } from "@/lib/auth";
 import { eventPhase, formatRange } from "@/lib/format";
 import { Flash } from "@/components/flash";
 import { PhaseBadge, AttendanceBadge } from "@/components/badges";
@@ -21,21 +21,20 @@ export default async function EventPage({ params, searchParams }: PageProps<"/ev
   const flash = await searchParams;
   const supabase = await createClient();
 
-  const { data: event } = await supabase
-    .from("events")
-    .select("*, organizations(id, name)")
-    .eq("id", id)
-    .maybeSingle<EventWithOrg>();
-  if (!event) notFound();
-
-  const user = await getCurrentUser();
-  const [{ data: count }, registrationResult, role] = await Promise.all([
+  const session = await getSession();
+  const [{ data: event }, user, { data: count }, registrationResult, membershipResult] = await Promise.all([
+    supabase.from("events").select("*, organizations(id, name)").eq("id", id).maybeSingle<EventWithOrg>(),
+    getCurrentUser(),
     supabase.rpc("event_registration_count", { p_event_id: id }),
-    user
-      ? supabase.from("registrations").select("*").eq("event_id", id).eq("user_id", user.id).maybeSingle<Registration>()
+    session
+      ? supabase.from("registrations").select("*").eq("event_id", id).eq("user_id", session.id).maybeSingle<Registration>()
       : Promise.resolve({ data: null }),
-    getOrgRole(event.org_id),
+    session
+      ? supabase.from("org_members").select("org_id").eq("user_id", session.id)
+      : Promise.resolve({ data: [] as { org_id: string }[] }),
   ]);
+  if (!event) notFound();
+  const role = (membershipResult.data ?? []).some((m) => m.org_id === event.org_id);
   const registration = registrationResult.data as Registration | null;
   const registered = registration?.status === "registered";
   const taken = (count as number | null) ?? 0;

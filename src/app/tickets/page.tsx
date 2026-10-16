@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { requireUser } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { eventPhase, formatRange } from "@/lib/format";
 import { AttendanceBadge } from "@/components/badges";
@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "My tickets" };
 type Row = Registration & { events: (DaloEvent & { organizations: { name: string } | null }) | null };
 
 export default async function TicketsPage({ searchParams }: PageProps<"/tickets">) {
-  const user = await requireUser("/tickets");
+  const user = await requireSession("/tickets");
   const params = await searchParams;
   const supabase = await createClient();
 

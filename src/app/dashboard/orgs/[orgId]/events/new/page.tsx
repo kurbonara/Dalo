@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getOrgRole, requireUser } from "@/lib/auth";
+import { getOrgRole, requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createEvent } from "@/app/actions/events";
 import { EventForm } from "@/components/event-form";
@@ -11,12 +11,14 @@ export const metadata: Metadata = { title: "New event" };
 
 export default async function NewEventPage({ params, searchParams }: PageProps<"/dashboard/orgs/[orgId]/events/new">) {
   const { orgId } = await params;
-  await requireUser(`/dashboard/orgs/${orgId}/events/new`);
+  await requireSession(`/dashboard/orgs/${orgId}/events/new`);
   const flash = await searchParams;
-  if (!(await getOrgRole(orgId))) notFound();
-
   const supabase = await createClient();
-  const { data: org } = await supabase.from("organizations").select("name").eq("id", orgId).single();
+  const [role, { data: org }] = await Promise.all([
+    getOrgRole(orgId),
+    supabase.from("organizations").select("name").eq("id", orgId).maybeSingle(),
+  ]);
+  if (!role) notFound();
 
   return (
     <div className="container-page max-w-2xl py-10">

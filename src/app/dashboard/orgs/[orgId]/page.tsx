@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addMember, deleteOrg, removeMember, updateOrg } from "@/app/actions/orgs";
 import { EventCard } from "@/components/event-card";
@@ -13,7 +13,7 @@ type Member = { user_id: string; role: OrgRole; profiles: { full_name: string; e
 
 export default async function OrgPage({ params, searchParams }: PageProps<"/dashboard/orgs/[orgId]">) {
   const { orgId } = await params;
-  const user = await requireUser(`/dashboard/orgs/${orgId}`);
+  const user = await requireSession(`/dashboard/orgs/${orgId}`);
   const flash = await searchParams;
   const supabase = await createClient();
 

@@ -1,29 +1,23 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireUser } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import type { DaloEvent, OrgRole } from "@/lib/types";
 
 export type StaffEvent = DaloEvent & { organizations: { id: string; name: string } };
 
 /** Loads an event the current user can manage, or 404s. */
 export async function requireEventStaff(eventId: string, next: string) {
-  const user = await requireUser(next);
+  const session = await requireSession(next);
   const supabase = await createClient();
-  const { data: event } = await supabase
-    .from("events")
-    .select("*, organizations(id, name)")
-    .eq("id", eventId)
-    .maybeSingle<StaffEvent>();
-  if (!event) notFound();
 
-  const { data: member } = await supabase
-    .from("org_members")
-    .select("role")
-    .eq("org_id", event.org_id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!member) notFound();
+  // Fetch the event and the user's memberships in parallel rather than one after another.
+  const [{ data: event }, { data: memberships }] = await Promise.all([
+    supabase.from("events").select("*, organizations(id, name)").eq("id", eventId).maybeSingle<StaffEvent>(),
+    supabase.from("org_members").select("org_id, role").eq("user_id", session.id),
+  ]);
+  const member = memberships?.find((m) => m.org_id === event?.org_id);
+  if (!event || !member) notFound();
 
-  return { user, event, role: member.role as OrgRole, supabase };
+  return { event, role: member.role as OrgRole, supabase };
 }

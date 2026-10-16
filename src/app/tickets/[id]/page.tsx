@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import { requireUser } from "@/lib/auth";
+import { getCurrentUser, requireSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { eventPhase, formatDateTime, formatRange } from "@/lib/format";
 import { AttendanceBadge } from "@/components/badges";
@@ -19,20 +19,21 @@ type Row = Registration & {
 
 export default async function TicketPage({ params, searchParams }: PageProps<"/tickets/[id]">) {
   const { id } = await params;
-  const user = await requireUser(`/tickets/${id}`);
+  const session = await requireSession(`/tickets/${id}`);
   const flash = await searchParams;
   const supabase = await createClient();
 
-  const [{ data }, { data: report }] = await Promise.all([
+  const [user, { data }, { data: report }] = await Promise.all([
+    getCurrentUser(),
     supabase
       .from("registrations")
       .select("*, events(*, organizations(name))")
       .eq("id", id)
-      .eq("user_id", user.id)
+      .eq("user_id", session.id)
       .maybeSingle<Row>(),
     supabase.from("attendance_report").select("completed, minutes_attended").eq("registration_id", id).maybeSingle(),
   ]);
-  if (!data?.events) notFound();
+  if (!data?.events || !user) notFound();
   const reg = data;
   const event = data.events;
   const completed = Boolean(report?.completed);
