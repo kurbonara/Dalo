@@ -10,6 +10,7 @@ import { AutoRefresh } from "@/components/auto-refresh";
 import { CertificateButton } from "@/components/certificate-button";
 import { Flash } from "@/components/flash";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import type { DaloEvent, Registration } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Ticket" };
@@ -60,6 +61,7 @@ export default async function TicketPage({ params, searchParams }: PageProps<"/t
         ← My tickets
       </Link>
       <Flash params={flash} />
+      <RefreshAtTimes times={[event.starts_at, event.ends_at]} />
       <RealtimeRefresh
         subscriptions={[
           { table: "registrations", filter: `id=eq.${reg.id}` },

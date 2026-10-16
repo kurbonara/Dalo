@@ -5,6 +5,7 @@ import { getCurrentUser, getSession } from "@/lib/auth";
 import { eventPhase, formatRange } from "@/lib/format";
 import { Flash } from "@/components/flash";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import { PhaseBadge, AttendanceBadge } from "@/components/badges";
 import { SubmitButton } from "@/components/submit-button";
 import { registerForEvent, cancelRegistration } from "@/app/actions/registrations";
@@ -23,10 +24,9 @@ export default async function EventPage({ params, searchParams }: PageProps<"/ev
   const supabase = await createClient();
 
   const session = await getSession();
-  const [{ data: event }, user, { data: count }, registrationResult, membershipResult] = await Promise.all([
+  const [{ data: event }, user, registrationResult, membershipResult] = await Promise.all([
     supabase.from("events").select("*, organizations(id, name)").eq("id", id).maybeSingle<EventWithOrg>(),
     getCurrentUser(),
-    supabase.rpc("event_registration_count", { p_event_id: id }),
     session
       ? supabase.from("registrations").select("*").eq("event_id", id).eq("user_id", session.id).maybeSingle<Registration>()
       : Promise.resolve({ data: null }),
@@ -38,7 +38,7 @@ export default async function EventPage({ params, searchParams }: PageProps<"/ev
   const role = (membershipResult.data ?? []).some((m) => m.org_id === event.org_id);
   const registration = registrationResult.data as Registration | null;
   const registered = registration?.status === "registered";
-  const taken = (count as number | null) ?? 0;
+  const taken = event.registered_count ?? 0;
   const full = event.capacity !== null && taken >= event.capacity;
   const phase = eventPhase(event.starts_at, event.ends_at);
 
@@ -51,6 +51,7 @@ export default async function EventPage({ params, searchParams }: PageProps<"/ev
         ← All events
       </Link>
       <Flash params={flash} />
+      <RefreshAtTimes times={[event.starts_at, event.ends_at]} />
       <RealtimeRefresh
         subscriptions={[
           { table: "events", filter: `id=eq.${id}` },

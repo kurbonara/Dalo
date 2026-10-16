@@ -7,6 +7,7 @@ import { AttendanceBadge } from "@/components/badges";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { Flash } from "@/components/flash";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import { PageHeader } from "@/components/page-header";
 import { NavSearch, NavTabs, PendingArea, PendingNavProvider } from "@/components/pending-nav";
 import { ReportTableSkeleton } from "@/components/skeletons";
@@ -101,6 +102,7 @@ export default async function ReportPage({ params, searchParams }: PageProps<"/d
         actions={<ReportTools rows={all} certificates={certificates} baseName={slug(event.title)} timeZone={TIMEZONE} />}
       />
       <Flash params={query} />
+      <RefreshAtTimes times={[event.starts_at, event.ends_at]} />
       <RealtimeRefresh
         subscriptions={[
           { table: "registrations", filter: `event_id=eq.${eventId}` },

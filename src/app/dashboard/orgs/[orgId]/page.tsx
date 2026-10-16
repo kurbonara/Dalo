@@ -6,6 +6,7 @@ import { addMember, deleteOrg, removeMember, updateOrg } from "@/app/actions/org
 import { EventCard } from "@/components/event-card";
 import { Flash } from "@/components/flash";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import type { EventWithOrg, Organization, OrgRole } from "@/lib/types";
@@ -51,6 +52,7 @@ export default async function OrgPage({ params, searchParams }: PageProps<"/dash
       />
       <Flash params={flash} />
       <RealtimeRefresh subscriptions={[{ table: "events", filter: `org_id=eq.${orgId}` }]} />
+      <RefreshAtTimes times={events.flatMap((e) => [e.starts_at, e.ends_at])} />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <section>

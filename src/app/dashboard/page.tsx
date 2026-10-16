@@ -6,6 +6,7 @@ import { createOrg } from "@/app/actions/orgs";
 import { EventCard } from "@/components/event-card";
 import { Flash } from "@/components/flash";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import type { EventWithOrg, Organization, OrgRole } from "@/lib/types";
@@ -42,6 +43,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
     <div className="container-page py-10">
       <PageHeader title="Organizer dashboard" subtitle="Manage your organizations, events and attendance." />
       <Flash params={params} />
+      <RefreshAtTimes times={events.flatMap((e) => [e.starts_at, e.ends_at])} />
       {orgIds.length > 0 && (
         <RealtimeRefresh subscriptions={[{ table: "events", filter: `org_id=in.(${orgIds.join(",")})` }]} />
       )}

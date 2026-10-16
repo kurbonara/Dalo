@@ -32,6 +32,7 @@ export type DaloEvent = {
   certificate_signatory_title: string | null;
   self_checkin_enabled: boolean;
   self_checkin_interval_seconds: number;
+  registered_count: number;
   created_at: string;
 };
 

@@ -8,6 +8,7 @@ import { PhaseBadge } from "@/components/badges";
 import { CopyButton } from "@/components/copy-button";
 import { Flash } from "@/components/flash";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import { PageHeader } from "@/components/page-header";
 import { Stat } from "@/components/stat";
 import { SubmitButton } from "@/components/submit-button";
@@ -82,6 +83,7 @@ export default async function ManageEventPage({ params, searchParams }: PageProp
         }
       />
       <Flash params={flash} />
+      <RefreshAtTimes times={[event.starts_at, event.ends_at]} />
       <RealtimeRefresh
         subscriptions={[
           { table: "registrations", filter: `event_id=eq.${eventId}` },

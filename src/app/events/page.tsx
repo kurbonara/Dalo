@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { NavSearch, NavTabs, PendingArea, PendingNavProvider } from "@/components/pending-nav";
 import { EventGridSkeleton } from "@/components/skeletons";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import type { EventWithOrg } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Events" };
@@ -40,6 +41,7 @@ export default async function EventsPage({ searchParams }: PageProps<"/events">)
     <div className="container-page py-10">
       <PageHeader title="Events" subtitle="Find an event and grab your QR ticket." />
       <RealtimeRefresh subscriptions={[{ table: "events" }]} />
+      <RefreshAtTimes times={events.flatMap((e) => [e.starts_at, e.ends_at])} />
 
       <PendingNavProvider>
         <div className="mb-6 flex flex-wrap items-center gap-3">

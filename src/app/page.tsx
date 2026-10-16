@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EventCard } from "@/components/event-card";
 import { EventGridSkeleton } from "@/components/skeletons";
 import { RealtimeRefresh } from "@/components/realtime-refresh";
+import { RefreshAtTimes } from "@/components/refresh-at-times";
 import type { EventWithOrg } from "@/lib/types";
 
 const steps = [
@@ -117,13 +118,18 @@ async function UpcomingEvents() {
     .limit(4);
   const events = (data ?? []) as EventWithOrg[];
 
-  return events.length ? (
-    <div className="grid gap-3 md:grid-cols-2">
-      {events.map((event) => (
-        <EventCard key={event.id} event={event} />
-      ))}
-    </div>
-  ) : (
-    <p className="card p-6 text-sm text-stone-600">No upcoming events yet. Check back soon!</p>
+  return (
+    <>
+      <RefreshAtTimes times={events.flatMap((e) => [e.starts_at, e.ends_at])} />
+      {events.length ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {events.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </div>
+      ) : (
+        <p className="card p-6 text-sm text-stone-600">No upcoming events yet. Check back soon!</p>
+      )}
+    </>
   );
 }
